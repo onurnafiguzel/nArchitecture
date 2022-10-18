@@ -2,7 +2,10 @@
 using Application.Services.Repositories;
 using AutoMapper;
 using Core.Application.Requests;
+using Core.Persistence.Paging;
+using Domain.Entities;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Models.Queries.GetListModel;
 
@@ -21,9 +24,16 @@ public class GetListModelQuery : IRequest<ModelListModel>
             this.modelRepository = modelRepository;
         }
 
-        public Task<ModelListModel> Handle(GetListModelQuery request, CancellationToken cancellationToken)
+        public async Task<ModelListModel> Handle(GetListModelQuery request, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            IPaginate<Model> models = await modelRepository.GetListAsync(include:
+                                                                          m => m.Include(c => c.Brand),
+                                                                          index: request.PageRequest.Page,
+                                                                          size: request.PageRequest.PageSize
+                                                                          );
+
+            ModelListModel mappedModels = mapper.Map<ModelListModel>(models);
+            return mappedModels;
         }
     }
 }
